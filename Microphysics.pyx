@@ -484,58 +484,168 @@ cdef class Microphysics_SB_Liquid:
 
 cdef extern from "microphysics_CLIMA.h":
 
-    void CLIMA_sedimentation_velocity_rain(Grid.DimStruct *dims,\
-                                           double* density, double* qr,\
-                                           double* qr_velocity) nogil
+    void CLIMA_sedimentation_velocities(Grid.DimStruct *dims,\
+                                        double* density, double* qr, double* qs,\
+                                        double* qr_velocity, double* qs_velocity) nogil
 
-    void CLIMA_microphysics_sources(Grid.DimStruct *dims, Lookup.LookupStruct *LT,\
-                                    double (*lam_fp)(double), double (*L_fp)(double, double),\
-                                    double* density, double* p0, double* temperature,\
-                                    double* qt, double* ql, double* qr, double dt,\
-                                    double* qr_tendency_micro, double* qr_tendency) nogil
+    void CLIMA_precipitation_sources(Grid.DimStruct *dims, Lookup.LookupStruct *LT,\
+                                     double (*lam_fp)(double), double (*L_fp)(double, double),\
+                                     double* density, double* p0, double* temperature,\
+                                     double* qt, double* ql, double* qi,\
+                                     double* qr, double* qs, double dt,\
+                                     double* qr_tendency_micro, double* qr_tendency,
+                                     double* qs_tendency_micro, double* qs_tendency,
+                                     double* coll_rate, double* evap_rate, double* melt_rate) nogil
 
     void CLIMA_qt_source_formation(Grid.DimStruct *dims, double* qr_tendency,\
-                                   double* qt_tendency) nogil
+                                   double* qs_tendency, double* qt_tendency) nogil
 
     void CLIMA_entropy_source_formation(Grid.DimStruct *dims, Lookup.LookupStruct *LT,\
                                         double (*lam_fp)(double), double (*L_fp)(double, double),\
                                         double* p0, double* T, double* Twet, double* qt,\
-                                        double* qv, double* qr_tendency,\
+                                        double* qv, double* precip_rate, double* evap_rate,\
                                         double* entropy_tendency) nogil
 
     void CLIMA_entropy_source_heating(Grid.DimStruct *dims, double* T, double* Twet,\
-                                      double* qr, double* w_qr, double* w,\
-                                      double* entropy_tendency) nogil
+                                      double* qr, double* qs,\
+                                      double* w_qr, double* w_qs, double* w,\
+                                      double* melt_rate, double* entropy_tendency) nogil
 
     void CLIMA_entropy_source_drag(Grid.DimStruct *dims, double* T,\
-                                   double* qr, double* w_qr,\
+                                   double* q_precip, double* w_precip,\
                                    double* entropy_tendency) nogil
 
-    void CLIMA_autoconversion_rain_wrapper(Grid.DimStruct *dims,\
-                                           double* ql,\
-                                           double* qr_tendency) nogil
+    void CLIMA_autoconversion_rain_wrapper(\
+        Grid.DimStruct *dims,\
+        double* ql,\
+        double* qr_tendency\
+    ) nogil
 
-    void CLIMA_accretion_rain_wrapper(Grid.DimStruct *dims, double* density,\
-                                      double* ql, double* qr,\
-                                      double* qr_tendency) nogil
+    void CLIMA_conv_q_ice_to_q_sno_wrapper(\
+        Grid.DimStruct *dims,\
+        double* qt,\
+        double* ql,\
+        double* qi,\
+        double* temperature,\
+        double* p0,\
+        double* density,\
+        Lookup.LookupStruct *LT,\
+        double (*lam_fp)(double),\
+        double (*L_fp)(double, double),\
+        double* qs_tendency\
+    ) nogil
 
-    void CLIMA_evaporation_rain_wrapper(Grid.DimStruct *dims, Lookup.LookupStruct *LT,\
-                                        double (*lam_fp)(double),\
-                                        double (*L_fp)(double, double),\
-                                        double* density, double* p0,\
-                                        double* temperature, double* qt,\
-                                        double* ql, double* qr,\
-                                        double* qr_tendency) nogil
+    void CLIMA_q_liq_q_rai_accr_wrapper(\
+        Grid.DimStruct *dims,\
+        double* ql,\
+        double* qr,\
+        double* density,\
+        double* qr_tendency\
+    ) nogil
 
-cdef class Microphysics_CLIMA_Liquid_1M:
+    void CLIMA_q_ice_q_sno_accr_wrapper(\
+        Grid.DimStruct *dims,\
+        double* qi,\
+        double* qs,\
+        double* density,\
+        double* qs_tendency\
+    ) nogil
+
+    void CLIMA_q_liq_q_sno_accr_wrapper(\
+        Grid.DimStruct *dims,\
+        double* ql,\
+        double* qs,\
+        double* density,\
+        double* temperature,\
+        double* ql_tendency,\
+        double* qs_tendency,\
+        double* qr_tendency\
+    ) nogil
+
+    void CLIMA_q_ice_q_rai_accr_wrapper(\
+        Grid.DimStruct *dims,\
+        double* qi,\
+        double* qr,\
+        double* density,\
+        double* qi_tendency\
+    ) nogil
+
+    void CLIMA_accretion_rain_sink_wrapper(\
+        Grid.DimStruct *dims,\
+        double* qi,\
+        double* qr,\
+        double* density,\
+        double* qr_tendency\
+    ) nogil
+
+    void CLIMA_accretion_snow_rain_wrapper(\
+        Grid.DimStruct *dims,\
+        double* qr,\
+        double* qs,\
+        double* density,\
+        double* temperature,\
+        double* qs_tendency,\
+        double* qr_tendency\
+    ) nogil
+
+    void CLIMA_rain_evaporation_wrapper(\
+        Grid.DimStruct *dims,\
+        double* qr,\
+        double* qt,\
+        double* ql,\
+        double* qi,\
+        double* temperature,\
+        double* p0,\
+        double* density,\
+        Lookup.LookupStruct *LT,\
+        double (*lam_fp)(double),\
+        double (*L_fp)(double, double),\
+        double* qr_tendency\
+    ) nogil
+
+    void CLIMA_snow_deposition_sublimation_wrapper(\
+        Grid.DimStruct *dims,\
+        double* qs,\
+        double* qt,\
+        double* ql,\
+        double* qi,\
+        double* temperature,\
+        double* p0,\
+        double* density,\
+        Lookup.LookupStruct *LT,\
+        double (*lam_fp)(double),\
+        double (*L_fp)(double, double),\
+        double* qs_tendency\
+    ) nogil
+
+    void CLIMA_snow_melt_wrapper(\
+        Grid.DimStruct *dims,\
+        double* qs,\
+        double* density,\
+        double* temperature,\
+        double* qs_tendency\
+    ) nogil
+
+cdef extern from "microphysics.h":
+    void microphysics_wetbulb_temperature(Grid.DimStruct *dims, Lookup.LookupStruct *LT, double* p0, double* s,
+                                          double* qt,  double* T, double* Twet )nogil
+
+cdef extern from "advection_interpolation.h":
+    double interp_2(double phi, double phip1) nogil
+
+cdef extern from "scalar_advection.h":
+    void compute_advective_fluxes_a(Grid.DimStruct *dims, double *rho0, double *rho0_half, double *velocity,
+                                    double *scalar, double* flux, int d, int scheme) nogil
+
+cdef class Microphysics_CLIMA_1M:
     def __init__(self, ParallelMPI.ParallelMPI Par, LatentHeat LH, namelist):
         # Create the appropriate linkages to the bulk thermodynamics
-        LH.Lambda_fp = lambda_constant
-        LH.L_fp = latent_heat_variable
+        LH.Lambda_fp = lambda_partition_fun
+        LH.L_fp = latent_heat_weighted
         self.thermodynamics_type = 'SA'
         #also set local versions
-        self.Lambda_fp = lambda_constant
-        self.L_fp = latent_heat_variable
+        self.Lambda_fp = lambda_partition_fun
+        self.L_fp = latent_heat_weighted
         self.CC = ClausiusClapeyron()
         self.CC.initialize(namelist, LH, Par)
 
@@ -550,21 +660,40 @@ cdef class Microphysics_CLIMA_Liquid_1M:
                      DiagnosticVariables.DiagnosticVariables DV, NetCDFIO_Stats NS,\
                      ParallelMPI.ParallelMPI Pa):
 
-        PV.add_variable('qr', 'kg/kg', r'q_r', 'rain water specific humidity','sym','scalar',Pa)
+        # helpers for microphysics rates
+        self.coll_rate = np.zeros((Gr.dims.npg,), dtype=np.double, order='c')
+        self.evap_rate = np.zeros((Gr.dims.npg,), dtype=np.double, order='c')
+        self.melt_rate = np.zeros((Gr.dims.npg,), dtype=np.double, order='c')
 
+        # prognostic microphysics variables
+        PV.add_variable('qr', 'kg/kg', r'q_r', 'rain water specific humidity','sym','scalar',Pa)
+        PV.add_variable('qs', 'kg/kg', r'q_r', 'snow water specific humidity','sym','scalar',Pa)
+
+        # diagnostic microphysics variables
         DV.add_variables('w_qr', 'm/s', r'w_{qr}', 'rain mass sedimentation veloctiy', 'sym', Pa)
+        DV.add_variables('w_qs', 'm/s', r'w_{qs}', 'snow mass sedimentation veloctiy', 'sym', Pa)
+
         DV.add_variables('temperature_wb', 'K', r'T_{wb}','wet bulb temperature','sym', Pa)
 
-        # add statistical output for the class
+        # vertical profiles for output
         NS.add_profile('qr_sedimentation_flux', Gr, Pa)
+        NS.add_profile('qs_sedimentation_flux', Gr, Pa)
+
         NS.add_profile('qr_autoconversion', Gr, Pa)
-        NS.add_profile('qr_accretion', Gr, Pa)
+        NS.add_profile('qs_autoconversion', Gr, Pa)
+        NS.add_profile('ql_qr_accretion', Gr, Pa)
+        NS.add_profile('qi_qs_accretion', Gr, Pa)
+        NS.add_profile('ql_qs_accretion_qs_tendency', Gr, Pa)
+        NS.add_profile('ql_qs_accretion_qr_tendency', Gr, Pa)
+        NS.add_profile('qi_qr_accretion_qi_sink', Gr, Pa)
+        NS.add_profile('qi_qr_accretion_qr_sink', Gr, Pa)
+        NS.add_profile('qr_qs_accretion_qr_tendency', Gr, Pa)
+        NS.add_profile('qr_qs_accretion_qs_tendency', Gr, Pa)
         NS.add_profile('qr_evaporation', Gr,Pa)
-        NS.add_profile('s_autoconversion', Gr, Pa)
-        NS.add_profile('s_accretion', Gr, Pa)
-        NS.add_profile('s_evaporation', Gr,Pa)
-        NS.add_profile('s_precip_heating', Gr, Pa)
-        NS.add_profile('s_precip_drag', Gr, Pa)
+        NS.add_profile('qs_deposition_sublimation', Gr,Pa)
+        NS.add_profile('qs_melt', Gr,Pa)
+
+        # TODO - update entropy source output
         return
 
     cpdef update(self, Grid.Grid Gr, ReferenceState.ReferenceState Ref, Th,\
@@ -575,55 +704,74 @@ cdef class Microphysics_CLIMA_Liquid_1M:
 
             Py_ssize_t qt_shift = PV.get_varshift(Gr, 'qt')
             Py_ssize_t qr_shift = PV.get_varshift(Gr, 'qr')
-            Py_ssize_t w_shift = PV.get_varshift(Gr, 'w')
+            Py_ssize_t qs_shift = PV.get_varshift(Gr, 'qs')
+            Py_ssize_t w_shift  = PV.get_varshift(Gr, 'w')
+            Py_ssize_t s_shift  = PV.get_varshift(Gr, 's')
 
-            Py_ssize_t t_shift = DV.get_varshift(Gr, 'temperature')
-            Py_ssize_t ql_shift = DV.get_varshift(Gr,'ql')
-            Py_ssize_t qv_shift = DV.get_varshift(Gr,'qv')
+            Py_ssize_t t_shift   = DV.get_varshift(Gr, 'temperature')
+            Py_ssize_t tw_shift  = DV.get_varshift(Gr, 'temperature_wb')
+            Py_ssize_t ql_shift  = DV.get_varshift(Gr, 'ql')
+            Py_ssize_t qi_shift  = DV.get_varshift(Gr, 'qi')
+            Py_ssize_t qv_shift  = DV.get_varshift(Gr, 'qv')
+            Py_ssize_t wqr_shift = DV.get_varshift(Gr, 'w_qr')
+            Py_ssize_t wqs_shift = DV.get_varshift(Gr, 'w_qs')
 
             double dt = TS.dt
-            Py_ssize_t wqr_shift = DV.get_varshift(Gr, 'w_qr')
 
             double[:] qr_tend_micro = np.zeros((Gr.dims.npg,), dtype=np.double, order='c')
+            double[:] qs_tend_micro = np.zeros((Gr.dims.npg,), dtype=np.double, order='c')
 
-        CLIMA_microphysics_sources(&Gr.dims, &self.CC.LT.LookupStructC,\
-                                   self.Lambda_fp, self.L_fp,\
-                                   &Ref.rho0_half[0], &Ref.p0_half[0],\
-                                   &DV.values[t_shift], &PV.values[qt_shift],\
-                                   &DV.values[ql_shift], &PV.values[qr_shift],\
-                                   dt, &qr_tend_micro[0], &PV.tendencies[qr_shift])
+        microphysics_wetbulb_temperature(\
+            &Gr.dims, &self.CC.LT.LookupStructC, &Ref.p0_half[0],\
+            &PV.values[s_shift], &PV.values[qt_shift],\
+            &DV.values[t_shift], &DV.values[tw_shift]\
+        )
 
+        CLIMA_precipitation_sources(\
+            &Gr.dims, &self.CC.LT.LookupStructC, self.Lambda_fp, self.L_fp,\
+            &Ref.rho0_half[0], &Ref.p0_half[0], &DV.values[t_shift],\
+            &PV.values[qt_shift], &DV.values[ql_shift], &DV.values[qi_shift],\
+            &PV.values[qr_shift], &PV.values[qs_shift],\
+            dt,\
+            &qr_tend_micro[0], &PV.tendencies[qr_shift],\
+            &qs_tend_micro[0], &PV.tendencies[qs_shift],\
+            &self.coll_rate[0], &self.evap_rate[0], &self.melt_rate[0]\
+        )
 
-        CLIMA_sedimentation_velocity_rain(&Gr.dims, &Ref.rho0_half[0],\
-                                          &PV.values[qr_shift],\
-                                          &DV.values[wqr_shift])
+        CLIMA_sedimentation_velocities(\
+            &Gr.dims, &Ref.rho0_half[0],\
+            &PV.values[qr_shift], &PV.values[qs_shift],\
+            &DV.values[wqr_shift], &DV.values[wqs_shift]\
+        )
 
-        CLIMA_qt_source_formation(&Gr.dims, &qr_tend_micro[0],\
-                                  &PV.tendencies[qt_shift])
+        CLIMA_qt_source_formation(\
+            &Gr.dims, &qr_tend_micro[0], &qs_tend_micro[0], &PV.tendencies[qt_shift]\
+        )
 
-        cdef:
-            Py_ssize_t tw_shift = DV.get_varshift(Gr, 'temperature_wb')
-            Py_ssize_t s_shift = PV.get_varshift(Gr, 's')
+        CLIMA_entropy_source_formation(\
+            &Gr.dims, &self.CC.LT.LookupStructC, self.Lambda_fp, self.L_fp,\
+            &Ref.p0_half[0], &DV.values[t_shift], &DV.values[tw_shift],\
+            &PV.values[qt_shift], &DV.values[qv_shift],\
+            &self.coll_rate[0], &self.evap_rate[0], &PV.tendencies[s_shift]\
+        )
 
-        microphysics_wetbulb_temperature(&Gr.dims, &self.CC.LT.LookupStructC,\
-                                         &Ref.p0_half[0], &PV.values[s_shift],\
-                                         &PV.values[qt_shift],\
-                                         &DV.values[t_shift], &DV.values[tw_shift])
+        CLIMA_entropy_source_heating(\
+            &Gr.dims, &DV.values[t_shift], &DV.values[tw_shift],\
+            &PV.values[qr_shift], &PV.values[qs_shift],\
+            &DV.values[wqr_shift], &DV.values[wqs_shift], &PV.values[w_shift],\
+            &self.melt_rate[0], &PV.tendencies[s_shift]\
+        )
 
-        CLIMA_entropy_source_formation(&Gr.dims, &self.CC.LT.LookupStructC,\
-                                       self.Lambda_fp, self.L_fp, &Ref.p0_half[0],\
-                                       &DV.values[t_shift], &DV.values[tw_shift],\
-                                       &PV.values[qt_shift], &DV.values[qv_shift],\
-                                       &qr_tend_micro[0], &PV.tendencies[s_shift])
-
-        CLIMA_entropy_source_heating(&Gr.dims, &DV.values[t_shift],\
-                                     &DV.values[tw_shift], &PV.values[qr_shift],\
-                                     &DV.values[wqr_shift], &PV.values[w_shift],\
-                                     &PV.tendencies[s_shift])
-
-        CLIMA_entropy_source_drag(&Gr.dims, &DV.values[t_shift],\
-                                  &PV.values[qr_shift], &DV.values[wqr_shift],\
-                                  &PV.tendencies[s_shift])
+        CLIMA_entropy_source_drag(\
+            &Gr.dims, &DV.values[t_shift],\
+            &PV.values[qr_shift], &DV.values[wqr_shift],\
+            &PV.tendencies[s_shift]\
+        )
+        CLIMA_entropy_source_drag(\
+            &Gr.dims, &DV.values[t_shift],\
+            &PV.values[qs_shift], &DV.values[wqs_shift],\
+            &PV.tendencies[s_shift]\
+        )
         return
 
     cpdef stats_io(self, Grid.Grid Gr, ReferenceState.ReferenceState Ref, Th,\
@@ -641,6 +789,7 @@ cdef class Microphysics_CLIMA_Liquid_1M:
             Py_ssize_t ishift, jshift
 
             Py_ssize_t qr_shift = PV.get_varshift(Gr, 'qr')
+            Py_ssize_t qs_shift = PV.get_varshift(Gr, 'qs')
             Py_ssize_t qt_shift = PV.get_varshift(Gr, 'qt')
             Py_ssize_t w_shift  = PV.get_varshift(Gr, 'w')
 
@@ -648,90 +797,150 @@ cdef class Microphysics_CLIMA_Liquid_1M:
             Py_ssize_t tw_shift  = DV.get_varshift(Gr, 'temperature_wb')
             Py_ssize_t qv_shift  = DV.get_varshift(Gr, 'qv')
             Py_ssize_t ql_shift  = DV.get_varshift(Gr, 'ql')
+            Py_ssize_t qi_shift  = DV.get_varshift(Gr, 'qi')
             Py_ssize_t wqr_shift = DV.get_varshift(Gr, 'w_qr')
+            Py_ssize_t wqs_shift = DV.get_varshift(Gr, 'w_qs')
 
+            double[:] ql_tendency = np.empty((Gr.dims.npg,), dtype=np.double, order='c')
             double[:] qr_tendency = np.empty((Gr.dims.npg,), dtype=np.double, order='c')
-            double[:] tmp
-            double[:] dummy =  np.zeros((Gr.dims.npg,), dtype=np.double, order='c')
-            double[:] s_src =  np.zeros((Gr.dims.npg,), dtype=np.double, order='c')
+            double[:] qs_tendency = np.empty((Gr.dims.npg,), dtype=np.double, order='c')
 
-        # copied from SB microphysics
+            double[:] tmp
+            double[:] dummy = np.zeros((Gr.dims.npg,), dtype=np.double, order='c')
 
         # sedimentation flux of qr
-        compute_advective_fluxes_a(&Gr.dims, &Ref.rho0[0], &Ref.rho0_half[0],\
-                                   &DV.values[wqr_shift], &PV.values[qr_shift],\
-                                   &dummy[0], 2, self.order)
+        compute_advective_fluxes_a(\
+            &Gr.dims, &Ref.rho0[0], &Ref.rho0_half[0], &DV.values[wqr_shift],\
+            &PV.values[qr_shift], &dummy[0], 2, self.order\
+        )
         tmp = Pa.HorizontalMean(Gr, &dummy[0])
         NS.write_profile('qr_sedimentation_flux', tmp[gw:-gw], Pa)
 
+        # sedimentation flux of qs
+        compute_advective_fluxes_a(\
+            &Gr.dims, &Ref.rho0[0], &Ref.rho0_half[0], &DV.values[wqs_shift],\
+            &PV.values[qs_shift], &dummy[0], 2, self.order\
+        )
+        tmp = Pa.HorizontalMean(Gr, &dummy[0])
+        NS.write_profile('qs_sedimentation_flux', tmp[gw:-gw], Pa)
+
         # autoconversion tendencies of qr
-        CLIMA_autoconversion_rain_wrapper(&Gr.dims, &DV.values[ql_shift], &qr_tendency[0])
+        CLIMA_autoconversion_rain_wrapper(\
+            &Gr.dims, &DV.values[ql_shift], &qr_tendency[0]\
+        )
         tmp = Pa.HorizontalMean(Gr, &qr_tendency[0])
         NS.write_profile('qr_autoconversion', tmp[gw: -gw], Pa)
 
-        # autoconversion tendencies of s
-        cdef double[:] s_auto = np.zeros((Gr.dims.npg,), dtype=np.double, order='c')
-        CLIMA_entropy_source_formation(&Gr.dims, &self.CC.LT.LookupStructC,\
-                                       self.Lambda_fp, self.L_fp, &Ref.p0_half[0],\
-                                       &DV.values[t_shift], &DV.values[tw_shift],\
-                                       &PV.values[qt_shift], &DV.values[qv_shift],\
-                                       &qr_tendency[0], &s_auto[0])
-        tmp = Pa.HorizontalMean(Gr, &s_auto[0])
-        NS.write_profile('s_autoconversion', tmp[gw: -gw], Pa)
+        # autoconversion tendencies of qs
+        CLIMA_conv_q_ice_to_q_sno_wrapper(\
+            &Gr.dims,\
+            &PV.values[qt_shift], &DV.values[ql_shift], &DV.values[qi_shift],\
+            &DV.values[t_shift], &Ref.p0_half[0], &Ref.rho0_half[0],\
+            &self.CC.LT.LookupStructC, self.Lambda_fp, self.L_fp,\
+            &qs_tendency[0]\
+        )
+        tmp = Pa.HorizontalMean(Gr, &qs_tendency[0])
+        NS.write_profile('qs_autoconversion', tmp[gw: -gw], Pa)
 
-        # accretion tendencies of qr
-        CLIMA_accretion_rain_wrapper(&Gr.dims, &Ref.rho0_half[0],\
-                                     &DV.values[ql_shift], &PV.values[qr_shift],\
-                                     &qr_tendency[0])
+        # ql qr accretion tendency of qr
+        CLIMA_q_liq_q_rai_accr_wrapper(\
+            &Gr.dims,\
+            &DV.values[ql_shift], &PV.values[qr_shift],\
+            &Ref.rho0_half[0],\
+            &qr_tendency[0]\
+        )
         tmp = Pa.HorizontalMean(Gr, &qr_tendency[0])
-        NS.write_profile('qr_accretion', tmp[gw: -gw], Pa)
+        NS.write_profile('ql_qr_accretion', tmp[gw: -gw], Pa)
 
-        # accretion tendencies of s
-        cdef double[:] s_accr = np.zeros((Gr.dims.npg,), dtype=np.double, order='c')
-        CLIMA_entropy_source_formation(&Gr.dims, &self.CC.LT.LookupStructC,\
-                                       self.Lambda_fp, self.L_fp, &Ref.p0_half[0],\
-                                       &DV.values[t_shift], &DV.values[tw_shift],\
-                                       &PV.values[qt_shift], &DV.values[qv_shift],\
-                                       &qr_tendency[0], &s_accr[0])
-        tmp = Pa.HorizontalMean(Gr, &s_accr[0])
-        NS.write_profile('s_accretion', tmp[gw: -gw], Pa)
+        # qi qs accretion tendency of qs
+        CLIMA_q_ice_q_sno_accr_wrapper(\
+            &Gr.dims,\
+            &DV.values[qi_shift], &PV.values[qs_shift],\
+            &Ref.rho0_half[0],\
+            &qs_tendency[0]\
+        )
+        tmp = Pa.HorizontalMean(Gr, &qs_tendency[0])
+        NS.write_profile('qi_qs_accretion', tmp[gw: -gw], Pa)
 
-        # evaporation tendencies of qr
-        CLIMA_evaporation_rain_wrapper(&Gr.dims, &self.CC.LT.LookupStructC,\
-                                       self.Lambda_fp, self.L_fp,\
-                                       &Ref.rho0_half[0], &Ref.p0_half[0],\
-                                       &DV.values[t_shift], &PV.values[qt_shift],\
-                                       &DV.values[ql_shift], &PV.values[qr_shift],\
-                                       &qr_tendency[0])
+        # ql qs accretion tendency of qs and qr
+        CLIMA_q_liq_q_sno_accr_wrapper(\
+            &Gr.dims,\
+            &DV.values[ql_shift], &PV.values[qs_shift],\
+            &Ref.rho0_half[0], &DV.values[t_shift],\
+            &ql_tendency[0], &qs_tendency[0], &qr_tendency[0]\
+        )
+        tmp = Pa.HorizontalMean(Gr, &qs_tendency[0])
+        NS.write_profile('ql_qs_accretion_qs_tendency', tmp[gw: -gw], Pa)
+        tmp = Pa.HorizontalMean(Gr, &qr_tendency[0])
+        NS.write_profile('ql_qs_accretion_qr_tendency', tmp[gw: -gw], Pa)
+
+        # qi qr accretion tendency of qi
+        CLIMA_q_ice_q_rai_accr_wrapper(\
+            &Gr.dims,\
+            &DV.values[qi_shift], &PV.values[qr_shift],\
+            &Ref.rho0_half[0],\
+            &qs_tendency[0]\
+        )
+        # this actually returns qi sink. Reusing qs_tendency array to avoid
+        # allocating additional resources
+        tmp = Pa.HorizontalMean(Gr, &qs_tendency[0])
+        NS.write_profile('qi_qr_accretion_qi_sink', tmp[gw: -gw], Pa)
+
+        # qi qr accretion tendency of qi
+        CLIMA_accretion_rain_sink_wrapper(\
+            &Gr.dims,\
+            &DV.values[qi_shift], &PV.values[qr_shift],\
+            &Ref.rho0_half[0],\
+            &qr_tendency[0]\
+        )
+        tmp = Pa.HorizontalMean(Gr, &qr_tendency[0])
+        NS.write_profile('qi_qr_accretion_qr_sink', tmp[gw: -gw], Pa)
+
+        # qs qr accretion tendency of qs and qr
+        CLIMA_accretion_snow_rain_wrapper(\
+            &Gr.dims,\
+            &PV.values[qr_shift], &PV.values[qs_shift],\
+            &Ref.rho0_half[0], &DV.values[t_shift],\
+            &qs_tendency[0], &qr_tendency[0]\
+        )
+        tmp = Pa.HorizontalMean(Gr, &qr_tendency[0])
+        NS.write_profile('qr_qs_accretion_qr_tendency', tmp[gw: -gw], Pa)
+        tmp = Pa.HorizontalMean(Gr, &qs_tendency[0])
+        NS.write_profile('qr_qs_accretion_qs_tendency', tmp[gw: -gw], Pa)
+
+        # qr evaporation tendency
+        CLIMA_rain_evaporation_wrapper(\
+            &Gr.dims,\
+            &PV.values[qr_shift], &PV.values[qt_shift],\
+            &DV.values[ql_shift], &DV.values[qi_shift],\
+            &DV.values[t_shift], &Ref.p0_half[0], &Ref.rho0_half[0],\
+            &self.CC.LT.LookupStructC, self.Lambda_fp, self.L_fp,\
+            &qr_tendency[0]\
+        )
         tmp = Pa.HorizontalMean(Gr, &qr_tendency[0])
         NS.write_profile('qr_evaporation', tmp[gw: -gw], Pa)
 
-        # evaporation tendencies of s
-        cdef double[:] s_evp = np.zeros((Gr.dims.npg,), dtype=np.double, order='c')
-        CLIMA_entropy_source_formation(&Gr.dims, &self.CC.LT.LookupStructC,\
-                                       self.Lambda_fp, self.L_fp, &Ref.p0_half[0],\
-                                       &DV.values[t_shift], &DV.values[tw_shift],\
-                                       &PV.values[qt_shift], &DV.values[qv_shift],\
-                                       &qr_tendency[0], &s_evp[0])
-        tmp = Pa.HorizontalMean(Gr, &s_evp[0])
-        NS.write_profile('s_evaporation', tmp[gw: -gw], Pa)
+        # qs deposition sublimation tendency
+        CLIMA_snow_deposition_sublimation_wrapper(\
+            &Gr.dims,\
+            &PV.values[qs_shift], &PV.values[qt_shift],\
+            &DV.values[ql_shift], &DV.values[qi_shift],\
+            &DV.values[t_shift], &Ref.p0_half[0], &Ref.rho0_half[0],\
+            &self.CC.LT.LookupStructC, self.Lambda_fp, self.L_fp,\
+            &qs_tendency[0]\
+        )
+        tmp = Pa.HorizontalMean(Gr, &qs_tendency[0])
+        NS.write_profile('qs_deposition_sublimation', tmp[gw: -gw], Pa)
 
-        # precip heating tendencies of s
-        cdef double[:] s_heat = np.zeros((Gr.dims.npg,), dtype=np.double, order='c')
-        CLIMA_entropy_source_heating(&Gr.dims, &DV.values[t_shift],\
-                                     &DV.values[tw_shift], &PV.values[qr_shift],\
-                                     &DV.values[wqr_shift], &PV.values[w_shift],\
-                                     &s_heat[0])
-        tmp = Pa.HorizontalMean(Gr, &s_heat[0])
-        NS.write_profile('s_precip_heating', tmp[gw: -gw], Pa)
-
-        # precip drag tendencies of s
-        cdef double[:] s_drag = np.zeros((Gr.dims.npg,), dtype=np.double, order='c')
-        CLIMA_entropy_source_drag(&Gr.dims, &DV.values[t_shift],\
-                                  &PV.values[qr_shift], &DV.values[wqr_shift],\
-                                  &s_drag[0])
-        tmp = Pa.HorizontalMean(Gr, &s_drag[0])
-        NS.write_profile('s_precip_drag', tmp[gw: -gw], Pa)
+        # qs melt tendency
+        CLIMA_snow_melt_wrapper(\
+            &Gr.dims,\
+            &PV.values[qs_shift],\
+            &Ref.rho0_half[0], &DV.values[t_shift],\
+            &qs_tendency[0]\
+        )
+        tmp = Pa.HorizontalMean(Gr, &qs_tendency[0])
+        NS.write_profile('qs_melt', tmp[gw: -gw], Pa)
 
         return
 
@@ -740,9 +949,6 @@ cdef extern from "entropies.h":
     inline double sv_c(double pv, double T) nogil
 cdef extern from "thermodynamic_functions.h":
     inline double qv_star_c(const double p0, const double qt, const double pv)nogil
-
-
-
 
 cdef cython_wetbulb(Grid.DimStruct *dims, Lookup.LookupStruct *LT, double *p0, double *s, double *qt, double *T, double *Twet):
 
@@ -900,5 +1106,5 @@ def MicrophysicsFactory(namelist, LatentHeat LH, ParallelMPI.ParallelMPI Par):
         return Microphysics_T_Liquid(Par, LH, namelist)
     elif(namelist['microphysics']['scheme'] == 'Arctic_1M'):
         return Microphysics_Arctic_1M(Par, LH, namelist)
-    elif(namelist['microphysics']['scheme'] == 'CLIMA_liquid_1M'):
-        return Microphysics_CLIMA_Liquid_1M(Par, LH, namelist)
+    elif(namelist['microphysics']['scheme'] == 'CLIMA_1M'):
+        return Microphysics_CLIMA_1M(Par, LH, namelist)
