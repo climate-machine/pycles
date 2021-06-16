@@ -303,7 +303,7 @@ def StableBubble():
     namelist['restart']['input_path'] = './'
     namelist['restart']['frequency'] = 600.0
 
-    namelist['conditional_stats'] = {} 
+    namelist['conditional_stats'] = {}
 
     namelist['stats_io'] = {}
     namelist['stats_io']['stats_dir'] = 'stats'
@@ -853,8 +853,8 @@ def DYCOMS_RF02():
     namelist['grid']['dz'] = 5.0
 
     namelist['mpi'] = {}
-    namelist['mpi']['nprocx'] = 1
-    namelist['mpi']['nprocy'] = 1
+    namelist['mpi']['nprocx'] = 8
+    namelist['mpi']['nprocy'] = 8
     namelist['mpi']['nprocz'] = 1
 
     namelist['time_stepping'] = {}
@@ -864,14 +864,8 @@ def DYCOMS_RF02():
     namelist['time_stepping']['dt_max'] = 10.0
     namelist['time_stepping']['t_max'] = 6.0 * 3600.0
 
-    namelist['thermodynamics'] = {}
-    namelist['thermodynamics']['latentheat'] = 'constant'
-
     namelist['microphysics'] = {}
-    namelist['microphysics']['scheme'] = 'SB_Liquid'
-    namelist['microphysics']['phase_partitioning'] = 'liquid_only'
-    namelist['microphysics']['cloud_sedimentation'] = True
-    namelist['microphysics']['ccn'] = 55.0e6
+    namelist['microphysics']['scheme'] = 'CLIMA_1M'
 
     namelist['sgs'] = {}
     namelist['sgs']['scheme'] = 'Smagorinsky'
@@ -908,7 +902,7 @@ def DYCOMS_RF02():
     namelist['fields_io'] = {}
     namelist['fields_io']['fields_dir'] = 'fields'
     namelist['fields_io']['frequency'] = 3600.0
-    namelist['fields_io']['diagnostic_fields'] = ['ql','temperature','buoyancy_frequency','viscosity']
+    namelist['fields_io']['diagnostic_fields'] = ['qi', 'ql','temperature','buoyancy_frequency','viscosity']
 
     namelist['visualization'] = {}
     namelist['visualization']['frequency'] = 1e6
@@ -918,6 +912,11 @@ def DYCOMS_RF02():
     namelist['conditional_stats']['frequency'] = 600.0
     namelist['conditional_stats']['stats_dir'] = 'cond_stats'
 
+    namelist['tracers'] = {}
+    namelist['tracers']['use_tracers'] = True
+    namelist['tracers']['scheme'] = 'UpdraftTracers'
+    namelist['tracers']['use_lcl_tracers'] = False
+    namelist['tracers']['timescale'] = 15.0
 
     namelist['meta'] = {}
     namelist['meta']['simname'] = 'DYCOMS_RF02'
@@ -1031,8 +1030,8 @@ def Rico():
     namelist['grid']['dz'] = 40.0
 
     namelist['mpi'] = {}
-    namelist['mpi']['nprocx'] = 1
-    namelist['mpi']['nprocy'] = 1
+    namelist['mpi']['nprocx'] = 8
+    namelist['mpi']['nprocy'] = 8
     namelist['mpi']['nprocz'] = 1
 
     namelist['time_stepping'] = {}
@@ -1042,18 +1041,8 @@ def Rico():
     namelist['time_stepping']['dt_max'] = 10.0
     namelist['time_stepping']['t_max'] = 3600.0*24.0
 
-    namelist['thermodynamics'] = {}
-    namelist['thermodynamics']['latentheat'] = 'constant'
-
     namelist['microphysics'] = {}
-    namelist['microphysics']['phase_partitioning'] = 'liquid_only'
-    namelist['microphysics']['cloud_sedimentation'] = False
-    namelist['microphysics']['ccn'] = 70.0e6
-    namelist['microphysics']['scheme'] = 'SB_Liquid'
-    namelist['microphysics']['SB_Liquid'] = {}
-
-    namelist['microphysics']['SB_Liquid']['nu_droplet'] = 0
-    namelist['microphysics']['SB_Liquid']['mu_rain'] = 1
+    namelist['microphysics']['scheme'] = 'CLIMA_1M'
 
     namelist['tracers'] = {}
     namelist['tracers']['use_tracers'] = True
@@ -1091,7 +1080,7 @@ def Rico():
     namelist['fields_io'] = {}
     namelist['fields_io']['fields_dir'] = 'fields'
     namelist['fields_io']['frequency'] = 1800.0
-    namelist['fields_io']['diagnostic_fields'] = ['ql','temperature','buoyancy_frequency','viscosity']
+    namelist['fields_io']['diagnostic_fields'] = ['qi', 'ql','temperature','buoyancy_frequency','viscosity']
 
     namelist['meta'] = {}
     namelist['meta']['simname'] = 'Rico'
@@ -1615,8 +1604,8 @@ def TRMM_LBA():
     namelist['grid']['stretch'] = True
 
     namelist['mpi'] = {}
-    namelist['mpi']['nprocx'] = 1
-    namelist['mpi']['nprocy'] = 1
+    namelist['mpi']['nprocx'] = 8
+    namelist['mpi']['nprocy'] = 8
     namelist['mpi']['nprocz'] = 1
 
     namelist['time_stepping'] = {}
@@ -1626,17 +1615,8 @@ def TRMM_LBA():
     namelist['time_stepping']['dt_max'] = 10.0
     namelist['time_stepping']['t_max'] = 3600.0 * 6.0
 
-    namelist['thermodynamics'] = {}
-    namelist['thermodynamics']['latentheat'] = 'constant'
-
     namelist['microphysics'] = {}
-    namelist['microphysics']['scheme'] = 'Arctic_1M' #T_Liquid'
-    namelist['microphysics']['phase_partitioning'] = 'liquid_only' # liquid_ice
-
-    #namelist['microphysics']['cloud_sedimentation'] = False
-    #namelist['microphysics']['ccn'] = 70.0e6
-    #namelist['microphysics']['SB_Liquid']['nu_droplet'] = 0
-    #namelist['microphysics']['SB_Liquid']['mu_rain'] = 1
+    namelist['microphysics']['scheme'] = 'CLIMA_1M'
 
     namelist['sgs'] = {}
     namelist['sgs']['scheme'] = 'Smagorinsky'
@@ -1674,7 +1654,7 @@ def TRMM_LBA():
     namelist['fields_io'] = {}
     namelist['fields_io']['fields_dir'] = 'fields'
     namelist['fields_io']['frequency'] = 1800.0
-    namelist['fields_io']['diagnostic_fields'] = ['ql', 'temperature', 'buoyancy_frequency', 'viscosity', 'buoyancy' , 'thetali']
+    namelist['fields_io']['diagnostic_fields'] = ['qi', 'ql', 'temperature', 'buoyancy_frequency', 'viscosity', 'buoyancy' , 'thetali']
 
     namelist['meta'] = {}
     namelist['meta']['simname'] = 'TRMM_LBA'
@@ -1801,8 +1781,8 @@ def GATE_III():
     namelist['grid']['stretch'] = True
 
     namelist['mpi'] = {}
-    namelist['mpi']['nprocx'] = 1
-    namelist['mpi']['nprocy'] = 1
+    namelist['mpi']['nprocx'] = 8
+    namelist['mpi']['nprocy'] = 8
     namelist['mpi']['nprocz'] = 1
 
     namelist['time_stepping'] = {}
@@ -1812,16 +1792,13 @@ def GATE_III():
     namelist['time_stepping']['dt_max'] = 2.0
     namelist['time_stepping']['t_max'] = 3600.0 * 24.0
 
-    namelist['thermodynamics'] = {}
-    namelist['thermodynamics']['latentheat'] = 'constant'
-
     namelist['microphysics'] = {}
-    namelist['microphysics']['scheme'] = 'Arctic_1M'  # T_Liquid'
-    namelist['microphysics']['phase_partitioning'] = 'liquid_only'  # liquid_ice
+    namelist['microphysics']['scheme'] = 'CLIMA_1M'
 
     namelist['sgs'] = {}
     namelist['sgs']['scheme'] = 'Smagorinsky'
-    # yair - add tracer transport to the simulation
+
+   # yair - add tracer transport to the simulation
     namelist['tracers'] = {}
     namelist['tracers']['use_tracers'] = True
     namelist['tracers']['scheme'] = 'UpdraftTracers'
@@ -1855,7 +1832,7 @@ def GATE_III():
     namelist['fields_io'] = {}
     namelist['fields_io']['fields_dir'] = 'fields'
     namelist['fields_io']['frequency'] = 1800.0
-    namelist['fields_io']['diagnostic_fields'] = ['ql', 'temperature', 'buoyancy_frequency', 'viscosity']
+    namelist['fields_io']['diagnostic_fields'] = ['qi', 'ql', 'temperature', 'buoyancy_frequency', 'viscosity']
 
     namelist['meta'] = {}
     namelist['meta']['simname'] = 'GATE_III'
