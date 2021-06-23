@@ -303,7 +303,7 @@ def StableBubble():
     namelist['restart']['input_path'] = './'
     namelist['restart']['frequency'] = 600.0
 
-    namelist['conditional_stats'] = {} 
+    namelist['conditional_stats'] = {}
 
     namelist['stats_io'] = {}
     namelist['stats_io']['stats_dir'] = 'stats'
@@ -1615,8 +1615,8 @@ def TRMM_LBA():
     namelist['grid']['stretch'] = True
 
     namelist['mpi'] = {}
-    namelist['mpi']['nprocx'] = 1
-    namelist['mpi']['nprocy'] = 1
+    namelist['mpi']['nprocx'] = 8
+    namelist['mpi']['nprocy'] = 8
     namelist['mpi']['nprocz'] = 1
 
     namelist['time_stepping'] = {}
@@ -1624,19 +1624,10 @@ def TRMM_LBA():
     namelist['time_stepping']['cfl_limit'] = 0.7
     namelist['time_stepping']['dt_initial'] = 1.0
     namelist['time_stepping']['dt_max'] = 10.0
-    namelist['time_stepping']['t_max'] = 3600.0 * 6.0
-
-    namelist['thermodynamics'] = {}
-    namelist['thermodynamics']['latentheat'] = 'constant'
+    namelist['time_stepping']['t_max'] = 0.5 * 3600 #3600.0 * 6.0
 
     namelist['microphysics'] = {}
-    namelist['microphysics']['scheme'] = 'Arctic_1M' #T_Liquid'
-    namelist['microphysics']['phase_partitioning'] = 'liquid_only' # liquid_ice
-
-    #namelist['microphysics']['cloud_sedimentation'] = False
-    #namelist['microphysics']['ccn'] = 70.0e6
-    #namelist['microphysics']['SB_Liquid']['nu_droplet'] = 0
-    #namelist['microphysics']['SB_Liquid']['mu_rain'] = 1
+    namelist['microphysics']['scheme'] = 'None_SA_Liquid_Ice'
 
     namelist['sgs'] = {}
     namelist['sgs']['scheme'] = 'Smagorinsky'
@@ -1674,7 +1665,7 @@ def TRMM_LBA():
     namelist['fields_io'] = {}
     namelist['fields_io']['fields_dir'] = 'fields'
     namelist['fields_io']['frequency'] = 1800.0
-    namelist['fields_io']['diagnostic_fields'] = ['ql', 'temperature', 'buoyancy_frequency', 'viscosity', 'buoyancy' , 'thetali']
+    namelist['fields_io']['diagnostic_fields'] = ['qi', 'ql', 'temperature', 'buoyancy_frequency', 'viscosity', 'buoyancy' , 'thetali']
 
     namelist['meta'] = {}
     namelist['meta']['simname'] = 'TRMM_LBA'

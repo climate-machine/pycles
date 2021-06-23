@@ -59,6 +59,8 @@ cdef class VisualizationOutput:
         cdef:
             double [:,:] local_lwp = np.zeros((Gr.dims.n[0], Gr.dims.n[1]), dtype=np.double, order='c')
             double [:,:] reduced_lwp = np.zeros((Gr.dims.n[0], Gr.dims.n[1]), dtype=np.double, order='c')
+            double [:,:] local_iwp = np.zeros((Gr.dims.n[0], Gr.dims.n[1]), dtype=np.double, order='c')
+            double [:,:] reduced_iwp = np.zeros((Gr.dims.n[0], Gr.dims.n[1]), dtype=np.double, order='c')
             Py_ssize_t i,j,k,ijk
             Py_ssize_t imin = Gr.dims.gw
             Py_ssize_t jmin = Gr.dims.gw
@@ -105,6 +107,29 @@ cdef class VisualizationOutput:
             del reduced_lwp
         except:
             Pa.root_print('Trouble Writing LWP')
+        try:
+            var_shift =  DV.get_varshift(Gr, 'qi')
+            with nogil:
+                for i in xrange(imin, imax):
+                    ishift = i * istride
+                    for j in xrange(jmin, jmax):
+                        jshift = j * jstride
+                        for k in xrange(kmin, kmax):
+                            ijk = ishift + jshift + k
+                            i2d = global_shift_i + i - Gr.dims.gw
+                            j2d = global_shift_j + j - Gr.dims.gw
+
+                            local_iwp[i2d, j2d] += (RS.rho0[k] * DV.values[var_shift + ijk] * dz)
+
+            comm.Reduce(local_iwp, reduced_iwp, op=MPI.SUM)
+
+            del local_iwp
+            if Pa.rank == 0:
+                out_dict['iwp'] = np.array(reduced_iwp,dtype=np.double)
+            del reduced_iwp
+        except:
+            Pa.root_print('Trouble Writing IWP')
+
 
 
         #Write output of Prognostic Variables and Diagnostic Variables
@@ -112,7 +137,7 @@ cdef class VisualizationOutput:
             double [:,:] local_var
             double [:,:] reduced_var
             list pv_vars = ['qt', 's', 'w']
-            list dv_vars = ['ql', 'diffusivity']
+            list dv_vars = ['ql', 'qi', 'diffusivity']
 
 
         for var in pv_vars:

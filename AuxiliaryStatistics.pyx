@@ -77,7 +77,6 @@ class CumulusStatistics:
         if 'thetali' in DV.name_index:
             scalars.append('thetali')
 
-
         for cond in conditions:
             NS.add_profile('fraction_'+cond,Gr,Pa)
             NS.add_profile('w_'+cond,Gr,Pa)
@@ -116,7 +115,7 @@ class CumulusStatistics:
                     jshift = j * jstride
                     for k in range(kmin,kmax):
                         ijk = ishift + jshift + k
-                        if DV.values[ql_shift+ijk] > 0.0:
+                        if DV.values[ql_shift+ijk]> 0.0:
                             cloudmask[ijk] = 1.0
                             if DV.values[b_shift+ijk] > mean_buoyancy[k]:
                                 coremask[ijk] = 1.0
@@ -185,7 +184,6 @@ class CumulusStatistics:
             NS.write_profile('qr_core', tmp[Gr.dims.gw:-Gr.dims.gw], Pa)
             tmp = Pa.HorizontalMeanofSquaresConditional(Gr, &DV.values[shift], &DV.values[shift], &coremask[0])
             NS.write_profile('qr2_core' ,tmp[Gr.dims.gw:-Gr.dims.gw],Pa)
-
 
         if 'nr' in PV.name_index:
             shift = PV.get_varshift(Gr, 'nr')

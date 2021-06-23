@@ -215,12 +215,26 @@ cdef class UpdraftTracers:
         if 'ql' in DV.name_index:
             NS.add_profile('updraft_ql', Gr, Pa, units=r'kg kg^{-1}',nice_name=r'q_{l,u}',
                        desc=r'updraft liquid water specific humidity')
-            NS.add_profile('updraft_ql2', Gr, Pa, units=r'kg^2 kg^{-2}',nice_name=r'q_{t,u}^2',
-                       desc=r'updraft total water specific humidity square')
+            NS.add_profile('updraft_ql2', Gr, Pa, units=r'kg^2 kg^{-2}',nice_name=r'q_{l,u}^2',
+                       desc=r'updraft liquid water specific humidity square')
             NS.add_profile('env_ql', Gr, Pa, units=r'kg kg^{-1}',nice_name=r'q_{l,e}',
                        desc=r'environment liquid water specific humidity')
             NS.add_profile('env_ql2', Gr, Pa, units=r'kg^2 kg^{-2}',nice_name=r'q_{l,u}^2',
-                       desc=r'environment total water specific humidity square')
+                       desc=r'environment liquid water specific humidity square')
+        if 'qi' in DV.name_index:
+            NS.add_profile('updraft_qi', Gr, Pa, units=r'kg kg^{-1}',nice_name=r'q_{i,u}',
+                       desc=r'updraft ice water specific humidity')
+            NS.add_profile('updraft_qi2', Gr, Pa, units=r'kg^2 kg^{-2}',nice_name=r'q_{i,u}^2',
+                       desc=r'updraft ice water specific humidity square')
+            NS.add_profile('env_qi', Gr, Pa, units=r'kg kg^{-1}',nice_name=r'q_{i,e}',
+                       desc=r'environment ice water specific humidity')
+            NS.add_profile('env_qi2', Gr, Pa, units=r'kg^2 kg^{-2}',nice_name=r'q_{i,u}^2',
+                       desc=r'environment ice water specific humidity square')
+            NS.add_profile('updraft_cloudfraction_ice', Gr, Pa, units=r'--', nice_name= r'f_{c,u}',
+                       desc=r'updraft cloud fraction')
+            NS.add_profile('env_cloudfraction_ice', Gr, Pa, units=r'--', nice_name= r'f_{c,e}',
+                       desc=r'environment cloud fraction')
+
         if 'qr' in PV.name_index:
             NS.add_profile('updraft_qr', Gr, Pa, units=r'kg kg^{-1}',nice_name=r'q_{r,u}',
                        desc=r'updraft rain water specific humidity')
@@ -372,8 +386,9 @@ cdef class UpdraftTracers:
             Py_ssize_t bvf_shift = DV.get_varshift(Gr, 'buoyancy_frequency')
             Py_ssize_t thr_shift = DV.get_varshift(Gr, 'theta_rho')
             Py_ssize_t qv_shift = DV.get_varshift(Gr, 'qv')
-            Py_ssize_t ql_shift, th_shift, qr_shift
+            Py_ssize_t ql_shift, th_shift, qr_shift, qi_shift
             double [:] cloudfraction = np.zeros((Gr.dims.npg),dtype=np.double, order='c')
+            double [:] cloudfraction_ice = np.zeros((Gr.dims.npg),dtype=np.double, order='c')
             double [:] tracer_normed = np.zeros((Gr.dims.npg),dtype=np.double, order='c')
             double [:] env_indicator = np.zeros((Gr.dims.npg),dtype=np.double, order='c')
             double [:] u_half = np.zeros((Gr.dims.npg),dtype=np.double, order='c')
@@ -393,14 +408,20 @@ cdef class UpdraftTracers:
 
         if self.lcl_tracers:
             NS.write_ts('grid_lcl',Gr.zl_half[self.index_lcl], Pa)
-        if 'ql' in DV.name_index:
+        if 'ql' in DV.name_index and 'qi' not in DV.name_index:
             ql_shift = DV.get_varshift(Gr,'ql')
-            self.get_cloud_heights(Gr, DV, Pa)
+            self.get_cloud_heights_ql(Gr, DV, Pa)
             print('cloud base, height', self.cloud_base, self.cloud_top)
             updraft_indicator_sc_w_ql(&Gr.dims, &PV.values[c_shift], &tracer_normed[0], &mean[0], &mean_square[0],
                                       &PV.values[w_shift],&DV.values[ql_shift], &Gr.z_half[0], self.cloud_base, self.cloud_top)
-            # updraft_indicator_sc_w(&Gr.dims, &PV.values[c_shift], &tracer_normed[0], &mean[0], &mean_square[0], &PV.values[w_shift])
-
+        if 'ql' in DV.name_index and 'qi' in DV.name_index:
+            ql_shift = DV.get_varshift(Gr,'ql')
+            qi_shift = DV.get_varshift(Gr,'qi')
+            self.get_cloud_heights_ql_qi(Gr, DV, Pa)
+            print('cloud base, height', self.cloud_base, self.cloud_top)
+            updraft_indicator_sc_w_ql_qi(&Gr.dims, &PV.values[c_shift], &tracer_normed[0], &mean[0], &mean_square[0],
+                                      &PV.values[w_shift], &DV.values[ql_shift], &DV.values[qi_shift],
+                                      &Gr.z_half[0], self.cloud_base, self.cloud_top)
         else:
             updraft_indicator_sc_w(&Gr.dims, &PV.values[c_shift], &tracer_normed[0], &mean[0], &mean_square[0], &PV.values[w_shift])
 
@@ -579,7 +600,32 @@ cdef class UpdraftTracers:
             tmp = Pa.HorizontalMeanConditional(Gr, &cloudfraction[0], &env_indicator[0])
             NS.write_profile('env_cloudfraction', tmp[Gr.dims.gw:-Gr.dims.gw], Pa)
 
+        if 'qi' in DV.name_index:
+            qi_shift = DV.get_varshift(Gr, 'qi')
+            tmp = Pa.HorizontalMeanConditional(Gr, &DV.values[qi_shift], &self.updraft_indicator[0])
+            NS.write_profile('updraft_qi', tmp[Gr.dims.gw:-Gr.dims.gw], Pa)
+            tmp = Pa.HorizontalMeanofSquaresConditional(Gr, &DV.values[qi_shift], &DV.values[ql_shift], &self.updraft_indicator[0])
+            NS.write_profile('updraft_qi2', tmp[Gr.dims.gw:-Gr.dims.gw], Pa)
 
+            tmp = Pa.HorizontalMeanConditional(Gr, &DV.values[qi_shift], &env_indicator[0])
+            NS.write_profile('env_qi', tmp[Gr.dims.gw:-Gr.dims.gw], Pa)
+            tmp = Pa.HorizontalMeanofSquaresConditional(Gr, &DV.values[qi_shift], &DV.values[qi_shift], &env_indicator[0])
+            NS.write_profile('env_qi2', tmp[Gr.dims.gw:-Gr.dims.gw], Pa)
+
+            with nogil:
+                for i in range(Gr.dims.nlg[0]):
+                    ishift = i * istride
+                    for j in range(Gr.dims.nlg[1]):
+                        jshift = j * jstride
+                        for k in range(Gr.dims.nlg[2]):
+                            ijk = ishift + jshift + k
+                            if DV.values[qi_shift+ ijk] >= ql_threshold:
+                                cloudfraction_ice[ijk] = 1.0
+
+            tmp = Pa.HorizontalMeanConditional(Gr, &cloudfraction[0], &self.updraft_indicator[0])
+            NS.write_profile('updraft_cloudfraction_ice', tmp[Gr.dims.gw:-Gr.dims.gw], Pa)
+            tmp = Pa.HorizontalMeanConditional(Gr, &cloudfraction[0], &env_indicator[0])
+            NS.write_profile('env_cloudfraction_ice', tmp[Gr.dims.gw:-Gr.dims.gw], Pa)
 
 
         if 'qr' in PV.name_index:
@@ -602,7 +648,7 @@ cdef class UpdraftTracers:
 
         return
 
-    cpdef get_cloud_heights(self, Grid.Grid Gr, DiagnosticVariables.DiagnosticVariables DV,  ParallelMPI.ParallelMPI Pa):
+    cpdef get_cloud_heights_ql(self, Grid.Grid Gr, DiagnosticVariables.DiagnosticVariables DV,  ParallelMPI.ParallelMPI Pa):
 
         cdef:
             Py_ssize_t istride = Gr.dims.nlg[1] * Gr.dims.nlg[2]
@@ -630,6 +676,42 @@ cdef class UpdraftTracers:
                     for k in range(kmin,kmax):
                         ijk = ishift + jshift + k
                         if DV.values[ql_shift+ijk] > ql_threshold:
+                            cb = fmin(cb, Gr.z_half[k])
+                            ct = fmax(ct, Gr.z_half[k])
+
+        self.cloud_base = Pa.domain_scalar_min(cb)
+        self.cloud_top =  Pa.domain_scalar_max(ct)
+
+        return
+
+    cpdef get_cloud_heights_ql_qi(self, Grid.Grid Gr, DiagnosticVariables.DiagnosticVariables DV,  ParallelMPI.ParallelMPI Pa):
+
+        cdef:
+            Py_ssize_t istride = Gr.dims.nlg[1] * Gr.dims.nlg[2]
+            Py_ssize_t jstride = Gr.dims.nlg[2]
+            Py_ssize_t i,j,k,ishift,jshift, ijk
+            Py_ssize_t gw = Gr.dims.gw
+            Py_ssize_t imin = Gr.dims.gw
+            Py_ssize_t jmin = Gr.dims.gw
+            Py_ssize_t kmin = Gr.dims.gw
+            Py_ssize_t imax = Gr.dims.nlg[0] - Gr.dims.gw
+            Py_ssize_t jmax = Gr.dims.nlg[1] - Gr.dims.gw
+            Py_ssize_t kmax = Gr.dims.nlg[2] - Gr.dims.gw
+            Py_ssize_t ql_shift = DV.get_varshift(Gr, 'ql')
+            Py_ssize_t qi_shift = DV.get_varshift(Gr, 'qi')
+            double cb, ct
+
+        # Compute cloud top and cloud base height
+        cb = 99999.9
+        ct = -99999.9
+        with nogil:
+            for i in range(imin,imax):
+                ishift = i * istride
+                for j in range(jmin,jmax):
+                    jshift = j * jstride
+                    for k in range(kmin,kmax):
+                        ijk = ishift + jshift + k
+                        if DV.values[ql_shift+ijk] + DV.values[qi_shift+ijk] > ql_threshold:
                             cb = fmin(cb, Gr.z_half[k])
                             ct = fmax(ct, Gr.z_half[k])
 
@@ -696,7 +778,7 @@ cdef class PurityTracers:
             Py_ssize_t istride = Gr.dims.nlg[1] * Gr.dims.nlg[2]
             Py_ssize_t jstride = Gr.dims.nlg[2]
             Py_ssize_t ishift, jshift, ijk, i,j,k
-            Py_ssize_t gw = Gr.dims.gw, ql_shift
+            Py_ssize_t gw = Gr.dims.gw, ql_shift, qi_shift
 
 
             double [:] tracer_normed = np.zeros((Gr.dims.npg),dtype=np.double, order='c')
@@ -708,6 +790,12 @@ cdef class PurityTracers:
         if 'ql' not in DV.name_index and conditions_flag == 3:
             conditions_flag = 2
 
+        if 'qi' not in DV.name_index and 'ql' not in DV.name_index and conditions_flag == 4:
+            conditions_flag = 2
+
+        if 'qi' not in DV.name_index and 'ql' in DV.name_index and conditions_flag == 4:
+            conditions_flag = 3
+
         if conditions_flag == 1:
             updraft_indicator_sc(&Gr.dims, &PV.values[c_shift], &tracer_normed[0],
                                    &mean[0], &mean_square[0])
@@ -716,11 +804,17 @@ cdef class PurityTracers:
                                    &mean[0], &mean_square[0], &PV.values[w_shift])
         elif conditions_flag == 3:
             ql_shift = DV.get_varshift(Gr, 'ql')
-            self.TracersUpdraft.get_cloud_heights(Gr,DV, Pa)
+            self.TracersUpdraft.get_cloud_heights_ql(Gr,DV, Pa)
             updraft_indicator_sc_w_ql(&Gr.dims, &PV.values[c_shift], &tracer_normed[0],&mean[0], &mean_square[0],
                                       &PV.values[w_shift], &DV.values[ql_shift], &Gr.z_half[0],
                                       self.TracersUpdraft.cloud_base, self.TracersUpdraft.cloud_top )
-
+        elif conditions_flag == 4:
+            ql_shift = DV.get_varshift(Gr, 'ql')
+            qi_shift = DV.get_varshift(Gr, 'qi')
+            self.TracersUpdraft.get_cloud_heights_ql_qi(Gr,DV, Pa)
+            updraft_indicator_sc_w_ql_qi(&Gr.dims, &PV.values[c_shift], &tracer_normed[0],&mean[0], &mean_square[0],
+                                      &PV.values[w_shift], &DV.values[ql_shift], &DV.values[qi_shift], &Gr.z_half[0],
+                                      self.TracersUpdraft.cloud_base, self.TracersUpdraft.cloud_top )
 
         if 'thetali' in DV.name_index:
             th_shift = DV.get_varshift(Gr,'thetali')
@@ -771,9 +865,16 @@ cdef class PurityTracers:
                                        &mean[0], &mean_square[0], &PV.values[w_shift])
             elif conditions_flag == 3:
                 ql_shift = DV.get_varshift(Gr, 'ql')
-                self.TracersUpdraft.get_cloud_heights(Gr,DV, Pa)
+                self.TracersUpdraft.get_cloud_heights_ql(Gr,DV, Pa)
                 updraft_indicator_sc_w_ql(&Gr.dims, &PV.values[c_shift], &tracer_normed[0],&mean[0], &mean_square[0],
                                           &PV.values[w_shift], &DV.values[ql_shift], &Gr.z_half[0],
+                                          self.TracersUpdraft.cloud_base, self.TracersUpdraft.cloud_top )
+            elif conditions_flag == 4:
+                ql_shift = DV.get_varshift(Gr, 'ql')
+                qi_shift = DV.get_varshift(Gr, 'qi')
+                self.TracersUpdraft.get_cloud_heights_ql_qi(Gr,DV, Pa)
+                updraft_indicator_sc_w_ql_qi(&Gr.dims, &PV.values[c_shift], &tracer_normed[0],&mean[0], &mean_square[0],
+                                          &PV.values[w_shift], &DV.values[ql_shift], &DV.values[qi_shift], &Gr.z_half[0],
                                           self.TracersUpdraft.cloud_base, self.TracersUpdraft.cloud_top )
 
             with nogil:
@@ -1013,6 +1114,51 @@ cdef updraft_indicator_sc_w_ql(Grid.DimStruct *dims,  double *tracer_raw, double
                                 tracer_normed[ijk] = 0.0
     return
 
+cdef updraft_indicator_sc_w_ql_qi(Grid.DimStruct *dims,  double *tracer_raw, double *tracer_normed, double *mean,
+                               double *meansquare_sigma, double *w, double *ql, double *qi,
+                               double *z_half, double z_cb, double z_ct):
+    cdef:
+        Py_ssize_t istride = dims.nlg[1] * dims.nlg[2]
+        Py_ssize_t jstride = dims.nlg[2]
+        Py_ssize_t ishift, jshift, ijk, i,j,k
+        double sigma_min
+        double sigma_sum = 0.0
+        double z_qc = z_cb + 0.25 * (z_ct - z_cb)
+        double w_half
+
+
+    with nogil:
+        for k in xrange(dims.nlg[2]):
+            meansquare_sigma[k] = meansquare_sigma[k] - mean[k] * mean[k]
+            meansquare_sigma[k] = sqrt(fmax(meansquare_sigma[k],0.0))
+            sigma_sum += meansquare_sigma[k]
+            sigma_min = sigma_sum/(k+1.0) * 0.05
+            if meansquare_sigma[k] < sigma_min:
+               for i in xrange(dims.nlg[0]):
+                    ishift = i*istride
+                    for j in xrange(dims.nlg[1]):
+                        jshift = j*jstride
+                        ijk = ishift + jshift + k
+                        tracer_normed[ijk] = 0.0
+            else:
+               for i in xrange(dims.nlg[0]):
+                    ishift = i*istride
+                    for j in xrange(dims.nlg[1]):
+                        jshift = j*jstride
+                        ijk = ishift + jshift + k
+                        w_half = 0.5*(w[ijk-1] + w[ijk])
+                        tracer_normed[ijk] = copysign( (tracer_raw[ijk] - mean[k])/ meansquare_sigma[k], w_half)
+
+    if z_ct > z_cb:
+        with nogil:
+            for k in xrange(dims.nlg[2]):
+                if z_half[k] >= z_qc and z_half[k] <= z_ct:
+                    for i in xrange(dims.nlg[0]):
+                        for j in xrange(dims.nlg[1]):
+                            ijk = i * istride + j * jstride + k
+                            if ql[ijk] + qi[ijk] < ql_threshold:
+                                tracer_normed[ijk] = 0.0
+    return
 
 cdef purity_extract_time(Grid.DimStruct *dims,  double *purity_tracer, double *time_tracer_raw, double *time_tracer,
                          double current_time):

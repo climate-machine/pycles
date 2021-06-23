@@ -42,8 +42,6 @@ cdef class No_Microphysics_Dry:
     cpdef stats_io(self, Grid.Grid Gr, ReferenceState.ReferenceState Ref, Th, PrognosticVariables.PrognosticVariables PV, DiagnosticVariables.DiagnosticVariables DV, NetCDFIO_Stats NS, ParallelMPI.ParallelMPI Pa):
         return
 
-
-
 cdef class No_Microphysics_SA:
     def __init__(self, ParallelMPI.ParallelMPI Par, LatentHeat LH, namelist):
         LH.Lambda_fp = lambda_constant
@@ -75,18 +73,21 @@ cdef class No_Microphysics_SA:
             self.stokes_sedimentation = False
         return
 
-    cpdef initialize(self, Grid.Grid Gr, PrognosticVariables.PrognosticVariables PV,DiagnosticVariables.DiagnosticVariables DV, NetCDFIO_Stats NS, ParallelMPI.ParallelMPI Pa):
+    cpdef initialize(self, Grid.Grid Gr, PrognosticVariables.PrognosticVariables PV,\
+                     DiagnosticVariables.DiagnosticVariables DV, NetCDFIO_Stats NS, ParallelMPI.ParallelMPI Pa):
         if self.cloud_sedimentation:
             DV.add_variables('w_qt', 'm/s', r'w_ql', 'cloud liquid water sedimentation velocity', 'sym', Pa)
             NS.add_profile('qt_sedimentation_flux', Gr, Pa)
             NS.add_profile('s_qt_sedimentation_source',Gr,Pa)
-
-
         return
-    cpdef update(self, Grid.Grid Gr, ReferenceState.ReferenceState Ref, Th, PrognosticVariables.PrognosticVariables PV, DiagnosticVariables.DiagnosticVariables DV, TimeStepping.TimeStepping TS,ParallelMPI.ParallelMPI Pa):
+
+    cpdef update(self, Grid.Grid Gr, ReferenceState.ReferenceState Ref, Th,\
+                 PrognosticVariables.PrognosticVariables PV, DiagnosticVariables.DiagnosticVariables DV,\
+                 TimeStepping.TimeStepping TS, ParallelMPI.ParallelMPI Pa):
         cdef:
             Py_ssize_t wqt_shift
             Py_ssize_t ql_shift = DV.get_varshift(Gr,'ql')
+
         if self.cloud_sedimentation:
             wqt_shift = DV.get_varshift(Gr, 'w_qt')
 
@@ -94,10 +95,11 @@ cdef class No_Microphysics_SA:
                 microphysics_stokes_sedimentation_velocity(&Gr.dims,  &Ref.rho0_half[0], self.ccn, &DV.values[ql_shift], &DV.values[wqt_shift])
             else:
                 sb_sedimentation_velocity_liquid(&Gr.dims,  &Ref.rho0_half[0], self.ccn, &DV.values[ql_shift], &DV.values[wqt_shift])
-
-
         return
-    cpdef stats_io(self, Grid.Grid Gr, ReferenceState.ReferenceState Ref, Th, PrognosticVariables.PrognosticVariables PV, DiagnosticVariables.DiagnosticVariables DV, NetCDFIO_Stats NS, ParallelMPI.ParallelMPI Pa):
+
+    cpdef stats_io(self, Grid.Grid Gr, ReferenceState.ReferenceState Ref, Th,\
+                   PrognosticVariables.PrognosticVariables PV, DiagnosticVariables.DiagnosticVariables DV,\
+                   NetCDFIO_Stats NS, ParallelMPI.ParallelMPI Pa):
         cdef:
             Py_ssize_t gw = Gr.dims.gw
             double[:] dummy =  np.zeros((Gr.dims.npg,), dtype=np.double, order='c')
@@ -122,11 +124,83 @@ cdef class No_Microphysics_SA:
                                     self.L_fp, Gr.dims.dx[2], 2)
             tmp = Pa.HorizontalMean(Gr, &s_src[0])
             NS.write_profile('s_qt_sedimentation_source', tmp[gw:-gw], Pa)
+        return
 
+cdef class No_Microphysics_SA_Liquid_Ice:
+    def __init__(self, ParallelMPI.ParallelMPI Par, LatentHeat LH, namelist):
+        LH.Lambda_fp = lambda_partition_fun
+        LH.L_fp = latent_heat_weighted
+        self.thermodynamics_type = 'SA'
+        #also set local versions
+        self.Lambda_fp = lambda_partition_fun
+        self.L_fp = latent_heat_weighted
+
+        # Extract case-specific parameter values from the namelist
+        # Get number concentration of cloud condensation nuclei (1/m^3)
+        #try:
+        #    self.ccn = namelist['microphysics']['ccn']
+        #except:
+        #    self.ccn = 100.0e6
+        try:
+            self.order = namelist['scalar_transport']['order_sedimentation']
+        except:
+            self.order = namelist['scalar_transport']['order']
+
+        try:
+            self.cloud_sedimentation = namelist['microphysics']['cloud_sedimentation']
+        except:
+            self.cloud_sedimentation = False
+
+        if namelist['meta']['casename'] == 'DYCOMS_RF02':
+            self.stokes_sedimentation = True
+        else:
+            self.stokes_sedimentation = False
+        return
+
+        if self.cloud_sedimentation == True:
+            Par.root_print("No cloud condensate sedimentation is considered for cloud liquid and ice simulations - overwriting to sedimentation = False")
+            self.cloud_sedimentation = False
+        if self.stokes_sedimentation == True:
+            Par.root_print("No stokes condensate sedimentation is considered for cloud liquid and ice simulations - overwriting to sedimentation = False")
+            self.cloud_sedimentation = False
+
+
+    cpdef initialize(self, Grid.Grid Gr, PrognosticVariables.PrognosticVariables PV,\
+                     DiagnosticVariables.DiagnosticVariables DV, NetCDFIO_Stats NS, ParallelMPI.ParallelMPI Pa):
+        if self.cloud_sedimentation:
+            DV.add_variables('w_qt', 'm/s', r'w_ql', 'cloud liquid water sedimentation velocity', 'sym', Pa)
+            NS.add_profile('qt_sedimentation_flux', Gr, Pa)
+            NS.add_profile('s_qt_sedimentation_source',Gr,Pa)
+        return
+
+    cpdef update(self, Grid.Grid Gr, ReferenceState.ReferenceState Ref, Th,\
+                 PrognosticVariables.PrognosticVariables PV, DiagnosticVariables.DiagnosticVariables DV,\
+                 TimeStepping.TimeStepping TS, ParallelMPI.ParallelMPI Pa):
 
         return
 
+    cpdef stats_io(self, Grid.Grid Gr, ReferenceState.ReferenceState Ref,\
+                   Th, PrognosticVariables.PrognosticVariables PV, DiagnosticVariables.DiagnosticVariables DV,\
+                   NetCDFIO_Stats NS, ParallelMPI.ParallelMPI Pa):
+        cdef:
+            Py_ssize_t gw = Gr.dims.gw
+            double[:] dummy =  np.zeros((Gr.dims.npg,), dtype=np.double, order='c')
+            Py_ssize_t qv_shift = DV.get_varshift(Gr, 'qv')
+            Py_ssize_t t_shift = DV.get_varshift(Gr, 'temperature')
+            Py_ssize_t qt_shift = PV.get_varshift(Gr, 'qt')
+            Py_ssize_t s_shift  = PV.get_varshift(Gr, 's')
+            double[:] s_src =  np.zeros((Gr.dims.npg,), dtype=np.double, order='c')
+            double[:] tmp
 
+        if self.cloud_sedimentation:
+
+            compute_qt_sedimentation_s_source(&Gr.dims, &Ref.p0_half[0], &Ref.rho0_half[0], &dummy[0],
+                                    &PV.values[qt_shift], &DV.values[qv_shift],&DV.values[t_shift], &s_src[0], self.Lambda_fp,
+                                    self.L_fp, Gr.dims.dx[2], 2)
+            tmp = Pa.HorizontalMean(Gr, &s_src[0])
+            NS.write_profile('s_qt_sedimentation_source', tmp[gw:-gw], Pa)
+
+        return
 
 cdef extern from "microphysics_sb.h":
     double sb_rain_shape_parameter_0(double density, double qr, double Dm) nogil
@@ -644,10 +718,11 @@ def MicrophysicsFactory(namelist, LatentHeat LH, ParallelMPI.ParallelMPI Par):
         return No_Microphysics_Dry(Par, LH, namelist)
     elif(namelist['microphysics']['scheme'] == 'None_SA'):
         return No_Microphysics_SA(Par, LH, namelist)
+    elif(namelist['microphysics']['scheme'] == 'None_SA_Liquid_Ice'):
+        return No_Microphysics_SA_Liquid_Ice(Par, LH, namelist)
     elif(namelist['microphysics']['scheme'] == 'SB_Liquid'):
         return Microphysics_SB_Liquid(Par, LH, namelist)
     elif(namelist['microphysics']['scheme'] == 'T_Liquid'):
         return Microphysics_T_Liquid(Par, LH, namelist)
     elif(namelist['microphysics']['scheme'] == 'Arctic_1M'):
         return Microphysics_Arctic_1M(Par, LH, namelist)
-

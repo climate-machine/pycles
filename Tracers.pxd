@@ -46,9 +46,8 @@ cdef class UpdraftTracers:
                  DiagnosticVariables.DiagnosticVariables DV, ParallelMPI.ParallelMPI Pa, TimeStepping.TimeStepping TS)
     cpdef stats_io(self, Grid.Grid Gr, PrognosticVariables.PrognosticVariables PV, DiagnosticVariables.DiagnosticVariables DV,
                    TimeStepping.TimeStepping TS, NetCDFIO_Stats NS, ParallelMPI.ParallelMPI Pa)
-    cpdef get_cloud_heights(self, Grid.Grid Gr, DiagnosticVariables.DiagnosticVariables DV,  ParallelMPI.ParallelMPI Pa)
-
-
+    cpdef get_cloud_heights_ql(self, Grid.Grid Gr, DiagnosticVariables.DiagnosticVariables DV,  ParallelMPI.ParallelMPI Pa)
+    cpdef get_cloud_heights_ql_qi(self, Grid.Grid Gr, DiagnosticVariables.DiagnosticVariables DV,  ParallelMPI.ParallelMPI Pa)
 
 cdef class PurityTracers:
     cdef:
