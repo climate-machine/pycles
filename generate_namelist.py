@@ -1624,7 +1624,7 @@ def TRMM_LBA():
     namelist['time_stepping']['cfl_limit'] = 0.7
     namelist['time_stepping']['dt_initial'] = 1.0
     namelist['time_stepping']['dt_max'] = 10.0
-    namelist['time_stepping']['t_max'] = 0.5 * 3600 #3600.0 * 6.0
+    namelist['time_stepping']['t_max'] = 3600.0 * 6.0
 
     namelist['microphysics'] = {}
     namelist['microphysics']['scheme'] = 'None_SA_Liquid_Ice'
@@ -1660,11 +1660,11 @@ def TRMM_LBA():
     namelist['stats_io'] = {}
     namelist['stats_io']['stats_dir'] = 'stats'
     namelist['stats_io']['auxiliary'] = ['Cumulus']
-    namelist['stats_io']['frequency'] = 100.0
+    namelist['stats_io']['frequency'] = 600.0
 
     namelist['fields_io'] = {}
     namelist['fields_io']['fields_dir'] = 'fields'
-    namelist['fields_io']['frequency'] = 1800.0
+    namelist['fields_io']['frequency'] = 3600.0
     namelist['fields_io']['diagnostic_fields'] = ['qi', 'ql', 'temperature', 'buoyancy_frequency', 'viscosity', 'buoyancy' , 'thetali']
 
     namelist['meta'] = {}
@@ -1675,7 +1675,7 @@ def TRMM_LBA():
     namelist['restart']['output'] = True
     namelist['restart']['init_from'] = False
     namelist['restart']['input_path'] = './'
-    namelist['restart']['frequency'] = 600.0
+    namelist['restart']['frequency'] = 1800.0
 
     namelist['conditional_stats'] = {}
     namelist['conditional_stats']['classes'] = ['Spectra']
